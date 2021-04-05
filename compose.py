@@ -15,10 +15,6 @@
 import numpy as np
 
 
-def convert_int_to_bool_list(i, attr_num=10):
-    return [int(ch) for ch in list(format(i, 'b').zfill(attr_num))]
-
-
 def decompose(input_query, attr_num=10):
     # query is a 2-d array 10 x 2
     # each row represents the attr while column represents the min and max
@@ -28,12 +24,11 @@ def decompose(input_query, attr_num=10):
     #                  [0.0, 1.0], [0.1, 0.8], [0.7, 0.8], [0.2, 0.6], [0.4, 0.6]])
     output_query_list = []
     for i in range(0, 2**attr_num):
-        binary_list = convert_int_to_bool_list(i)
         output_query = []
         for j in range(0, attr_num):
             # Since i = 0 represents all max
             # while i = 2**n -1 represents all min
-            if binary_list[j] == 0:
+            if (i & (0b1 << j)) == 0:
                 output_query.append(input_query[j][1])
             else:
                 output_query.append(input_query[j][0])
@@ -46,7 +41,7 @@ def compose(input_res, attr_num=10):
     # input_res = np.random.random(2**attr_num)
     res = np.array([0.0])
     for i in range(0, 2**attr_num):
-        count_one = np.sum(convert_int_to_bool_list(i))
+        count_one = bin(i).count("1")
         sign = (-1)**count_one
         res = res + sign * input_res[i]
     # Due to precision error, sometimes res while be small negative, we fix it by max

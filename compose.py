@@ -44,10 +44,10 @@ def decompose(input_query, attr_num=10):
 def compose(input_res, attr_num=10):
     # the input result are 2**attr_num and each is related to the above generated queries
     # input_res = np.random.random(2**attr_num)
-    res = 0.0
+    res = np.array([0.0])
     for i in range(0, 2**attr_num):
         count_one = np.sum(convert_int_to_bool_list(i))
         sign = (-1)**count_one
         res = res + sign * input_res[i]
     # Due to precision error, sometimes res while be small negative, we fix it by max
-    return max(res, 0)
+    return np.maximum(res, np.array([0.0]))

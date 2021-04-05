@@ -1,10 +1,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
-import numpy as np
-import math
-from shuffle import shuffle
+from einops import rearrange
 
 
 class AQPNet(nn.Module):
@@ -32,7 +29,7 @@ class AQPNet(nn.Module):
         x = self.conv2(x)
         x = F.relu(x)
         # the flatten should not participate on the dim 0, which is batch dim
-        x = torch.flatten(x, start_dim=1)
+        x = rearrange(x, 'b c h w -> b (c h w)')
         x = self.fc1(x)
         x = self.do1(x)
         x = F.relu(x)

@@ -1,11 +1,8 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-import torch.optim as optim
-import torchvision
 import numpy as np
+from einops import repeat
 from net import AQPNet
-from shuffle import shuffle, shuffle_batch
+from shuffle import shuffle_batch
 from compose import compose, decompose
 from globals import *
 
@@ -25,12 +22,11 @@ def do_query(query):
     # print(output_queries)
     shuffle_output_queries = shuffle_batch(output_queries, ATTR_NUM, SHUFFLE_TIME)
     tensor_queries = torch.from_numpy(np.array(shuffle_output_queries)).to(device=device, dtype=torch.float)
-    queries_size = list(tensor_queries.size())
-    queries_size.insert(1, 1)
-    tensor_queries = torch.reshape(tensor_queries, queries_size)
+    # Same Reason in train.py
+    tensor_queries = repeat(tensor_queries, 'b w h -> b c w h', c=1)
     output_tensors = model(tensor_queries)
     output_array = output_tensors.data.cpu().numpy()
-    output_array = np.reshape(output_array, output_array.size)
+    # output_array = np.reshape(output_array, output_array.size)
     res = compose(output_array)
     return res
 

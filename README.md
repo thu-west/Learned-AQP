@@ -2,10 +2,10 @@
 
 ## 安装环境
 
-python 3 + torch + numpy
+python 3 + torch + numpy + einops
 
 ```bash
-pip install torch numpy
+pip install torch numpy einops 
 ```
 
 ## 使用方法

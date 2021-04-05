@@ -1,4 +1,5 @@
 ATTR_NUM = 10
+SHUFFLE_TIME = 10
 MODEL_SAVE_PATH = "aqp.pt"
 
 # example for train sets, it can be simply csv with n rows and 11 columns if we have 10 attributes

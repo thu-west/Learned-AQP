@@ -49,4 +49,5 @@ def compose(input_res, attr_num=10):
         count_one = np.sum(convert_int_to_bool_list(i))
         sign = (-1)**count_one
         res = res + sign * input_res[i]
-    return res
+    # Due to precision error, sometimes res while be small negative, we fix it by max
+    return max(res, 0)

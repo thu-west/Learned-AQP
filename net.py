@@ -4,17 +4,23 @@ import torch.nn.functional as F
 import torch.optim as optim
 import numpy as np
 import math
-from .shuffle import shuffle
+from shuffle import shuffle
 
 
 class AQPNet(nn.Module):
 
-    def __init__(self, attr_num):
+    def __init__(self, attr_num, shuffle_time):
         super(AQPNet, self).__init__()
-        self.attr_num = attr_num
-        self.conv1 = nn.Conv2d(1, 8, 5, padding=2, padding_mode='circular')
-        self.conv2 = nn.Conv2d(8, 16, 3, padding=1, padding_mode='circular')
-        self.fc1 = nn.Linear(math.ceil(attr_num / 2) * 32, 128)
+        first_level_pad = 2
+        second_level_pad = 1
+        total_pad = first_level_pad * second_level_pad
+        assert attr_num % total_pad == 0
+        assert shuffle_time % total_pad == 0
+        self.conv1 = nn.Conv2d(1, 8, 5, padding=first_level_pad, padding_mode='circular')
+        self.conv2 = nn.Conv2d(8, 16, 3, padding=second_level_pad, padding_mode='circular')
+        # After convolution, the size of length and width would be deduced to 1 / total_pad of the origin
+        # Thus, after flatten, we only have attr_num//total_pad * shuffle_time//total_pad * 16 vals
+        self.fc1 = nn.Linear(attr_num//total_pad * shuffle_time//total_pad * 16, 128)
         self.fc2 = nn.Linear(128, 1)
         self.do1 = nn.Dropout(0.5)
         self.do2 = nn.Dropout(0.5)
@@ -22,13 +28,14 @@ class AQPNet(nn.Module):
     def forward(self, x):
         x = self.conv1(x)
         x = F.relu(x)
-        x = F.max_pool1d(x, 2, ceil_mode=True)
+        x = F.max_pool2d(x, 2, ceil_mode=True)
         x = self.conv2(x)
         x = F.relu(x)
-        x = torch.flatten(x)
+        # the flatten should not participate on the dim 0, which is batch dim
+        x = torch.flatten(x, start_dim=1)
         x = self.fc1(x)
         x = self.do1(x)
         x = F.relu(x)
         x = self.fc2(x)
         x = self.do1(x)
-        return F.sigmoid(x)
+        return torch.sigmoid(x)

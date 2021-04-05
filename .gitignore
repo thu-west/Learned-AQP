@@ -1,2 +1,4 @@
 venv
 .idea
+aqp.pt
+__pycache__

@@ -22,7 +22,7 @@ pip install torch numpy einops
 ```
 
 ## UDF 嵌入式版本
-除上述软件之外，我们还额外使用了这些软件：    
+除上述软件之外，我们还额外使用了这些软件，其中部分软件需要和硬件相匹配：    
 - CMake 3.19.2
 - GCC 7.5.0
 - Pytorch Stable 1.8.1
@@ -30,7 +30,6 @@ pip install torch numpy einops
 - Cudnn 8.2.0
 - Boost 1.69.0
 - Numcpp 2.4.2
-其中部分软件需要和硬件相匹配。
 
 # 使用方法
 

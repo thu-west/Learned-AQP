@@ -1,4 +1,6 @@
-Code Contributors: Yang Duan yangd4@illinois.edu for UDF Implementations, Jiacheng Wu wjcskqygj@gmail.com for Python Implementation
+Code Contributors: 
+- Yang Duan yangd4@illinois.edu for UDF Implementations
+- Jiacheng Wu wjcskqygj@gmail.com for Python Implementation
 
 If you have any questions, feel free to contact us either by creating an issue on Github or sending emails. 
 

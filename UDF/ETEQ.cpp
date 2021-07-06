@@ -14,6 +14,9 @@
 
 using namespace std;
 
+// All of the following functions are translated from Python functions with the same names.
+// The Function main corresponds to Python Function do_query.
+
 vector<int> convert_int_to_bool_list(int i, int attr_num=ATTR_NUM){
     // format(i, 'b')
     int input = i;

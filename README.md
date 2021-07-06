@@ -1,26 +1,80 @@
-# Learning Based AQP
+# 介绍
 
-## 安装环境
+这个项目借助机器学习的方法来实现近似查询。
+通过用户自定义函数，我们成功将其嵌入在了MySQL数据库平台。
+更多细节可以查阅我们的论文来获取 [TBD paper](https://TBD).
 
+### 目录
+**[安装环境](#安装环境)**<br>
+**[使用方法](#使用方法)**<br>
+**[数据格式说明](#数据格式说明)**<br>
+**[代码说明（按照文件）](#代码说明（按照文件）)**<br>
+**[复杂查询的转化](#复杂查询的转化)**<br>
+
+
+# 安装环境
+
+## Python 原始版本
 python 3 + torch + numpy + einops
 
 ```bash
 pip install torch numpy einops 
 ```
 
-## 使用方法
+## UDF 嵌入式版本
+除上述软件之外，我们还额外使用了这些软件：    
+- CMake 3.19.2
+- GCC 7.5.0
+- Pytorch Stable 1.8.1
+- Cudatoolkit 11.0 on WSL2
+- Cudnn 8.2.0
+- Boost 1.69.0
+- Numcpp 2.4.2
+其中部分软件需要和硬件相匹配。
+
+# 使用方法
+
+## Python 原始版本
 
 1. 训练数据的示例在global.py里使用数组表示（待会会具体说明），其他类型数据可以使用csv格式，然后numpy导入，并不麻烦
-2. 导入数据后，使用train.py训练即可，替换第46行的EG_TRAIN_SETS即可进行训练。训练完毕后，模型会导入到全局变量的MODEL_SAVE_PATH中。
+2. 导入数据后，使用train.py训练即可，替换第46行的EG_TRAIN_SETS即可进行训练。训练完毕后，模型会导入到全局变量的MODEL_SAVE_PATH中
 3. 之后使用query.py即可测试，第24行为示例的query，调用do_query可以进行示例查询
 
-## 数据格式说明
+## UDF 嵌入式版本    
+以下步骤均在UDF文件夹中完成   
+1. 运行Python文件train.py后使用query.py获取训练模型
+2. 将保存的modelscript.pt文件复制到mysql软件目录下
+```bash
+sudo cp modelscript.pt /etc/mysql/modelscript.pt
+sudo chmod 777 /etc/mysql/modelscript.pt
+```
+3. 在成功安装上述软件后，将UDF文件夹中CMakeLists.txt的软件地址改为相应地址
+5. 运行下列linux命令
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release
+sudo cp libmyAQP.so /usr/lib/mysql/plugin/
+```
+6. 进入MySQL运行下列命令
+```bash
+DROP FUNCTION IF EXISTS myAQP;
+CREATE FUNCTION myAQP RETURNS REAL SONAME 'libmyAQP.so';
+```
+7. 使用示例
+```bash
+select myAQP(0.2,0.52,0.1,0.23,0.065,0.27,0.055,0.87,0.32,0.68,0.01,0.78,0.27,0.83,0.005,0.35,0.03,0.08,0.46,0.99);
+```
+
+
+# 数据格式说明
 
 1. 数据格式为一个二维数组即可，每一行代表一个简单查询（各个属性只有上界，没有下届）以及其对应的值。假设有N个属性，那么一行数据就有N+1个值，第一个值为正则后的查询人次结果，而剩下的值就一一对应该简单查询的每个属性的上界。
 2. 正则话。对于查询数量（第一个值）的正则化，应该是该简单查询获得人次除以库中所有有效人次。对于连续性的属性，就直接正则化到[0,1]；对于离散型的属性，预先给定好离散属性值的顺序，然后给予0,1,2…；之后再正则化即可。
 3. 所以，所谓的网络，就是输入N个属性的正则化后的值，然后输出一个人次的比值。
 
-## 代码说明（按照文件）
+# 代码说明（按照文件）
 
 1. global.py: 定义了一些全局变量，以及偷懒直接在这里定义示例训练数据集
 2. shuffle.py: 定义了如何将一维的训练数据通过不断重排列，然后将各种排列整合后获得二位数据。具体操作，比如属性数量为10个，那么我们就会选择10个不同的重排列（按照一定规则生成，且对于所有训练输入都一致），然后将他们vstack之后获得10*10的二维图像，这个二维图像才是真正的输入。这样shuffle的好处，是可以让原来一维相距较远的属性值通过重排列之后，在二维距离上相对较近，从而使得使用卷积神经网络更为合理
@@ -28,8 +82,13 @@ pip install torch numpy einops
 4. train.py: 就是pytorch的基本训练框架，并没有什么太多的花样
 5. compose.py: 这个文件是用来文件复杂查询到简单查询，然后并且组合简单查询的结果获得复杂查询的结果。所谓的复杂查询就是每个属性既有上界，也有下界。因为一个包含n个属性的复杂query可以转化为2^n个简单查询，可以利用容斥定律来考虑这个问题（下一节细谈）
 6. query.py: 利用compose.py和train.py获得model进行具体query的查询示意
+7. UDF/CMakeLists.txt: 编译UDF的CMake文件
+8. UDF/aqp_TPCH.pt: 论文中针对TPCH数据库训练的模型
+9. UDF/aqp_synthetic.pt: 论文中针对随机生成的数据库训练的模型
+10. UDF/modelscript_TPCH.pt: 论文中针对TPCH数据库训练的模型的torchscript文件
+11. UDF/modelscript_synthetic.pt: 论文中针对随机生成的数据库训练的模型的torchscript文件
 
-## 复杂查询的转化
+# 复杂查询的转化
 
 我们使用三个属性作为举例（代码注释中使用了2个属性举例）
 
@@ -59,10 +118,4 @@ pip install torch numpy einops
 最后对于上述2^n个简单查询，我们都获得了其输出，然后问题就是如何组合呢？
 
 这个也非常简单，其实就是对他们进行加或者减，而其中每一项的符号取决与他们的二进制表示中含有1的个数，然后1的个数是偶数，那么就是+，否则就是-。所以在上述例子中， R5的二进制表示是0b101，其中包含偶数个1，所以在上述复杂查询R的组合中R5是取+。其他同理
-
-
-
-# 以上就是所有的内容
-
- 
 

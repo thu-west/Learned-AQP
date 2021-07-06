@@ -30,6 +30,7 @@ pip install torch numpy einops
 - Cudnn 8.2.0
 - Boost 1.69.0
 - Numcpp 2.4.2
+- lib_mysqludf_sys
 
 # 使用方法
 
@@ -48,6 +49,8 @@ sudo cp modelscript.pt /etc/mysql/modelscript.pt
 sudo chmod 777 /etc/mysql/modelscript.pt
 ```
 3. 在成功安装上述软件后，将CMakeLists.txt文件中的软件地址改为相应地址
+
+### ETIQ 版本UDF
 5. 运行下列linux命令
 ```bash
 mkdir build
@@ -65,7 +68,19 @@ CREATE FUNCTION myAQP RETURNS REAL SONAME 'libmyAQP.so';
 ```bash
 select myAQP(0.2,0.52,0.1,0.23,0.065,0.27,0.055,0.87,0.32,0.68,0.01,0.78,0.27,0.83,0.005,0.35,0.03,0.08,0.46,0.99);
 ```
-
+### ETEQ 版本UDF
+1. 需要将CMakeLists.txt文件中的ETIQ部分注释掉且将ETEQ部分取消注释
+2. 运行下列linux命令
+```bash
+mkdir build
+cd build
+cmake ..
+cmake --build . --config Release
+```
+7. 使用示例
+```bash
+select sys_eval('/mnt/c/Learned-AQP/UDF/build/ETEQ 0.025 0.9 0.32 0.64 0.15 0.87 0.035 0.46 0.23 0.65 0.19 0.87 0.4 0.96 0.32 0.97 0.065 0.98 0.05 0.33');
+```
 
 # 数据格式说明
 
@@ -82,10 +97,12 @@ select myAQP(0.2,0.52,0.1,0.23,0.065,0.27,0.055,0.87,0.32,0.68,0.01,0.78,0.27,0.
 5. compose.py: 这个文件是用来文件复杂查询到简单查询，然后并且组合简单查询的结果获得复杂查询的结果。所谓的复杂查询就是每个属性既有上界，也有下界。因为一个包含n个属性的复杂query可以转化为2^n个简单查询，可以利用容斥定律来考虑这个问题（下一节细谈）
 6. query.py: 利用compose.py和train.py获得model进行具体query的查询示意
 7. UDF/CMakeLists.txt: 编译UDF的CMake文件
-8. UDF/aqp_TPCH.pt: 论文中针对TPCH数据库训练的模型
-9. UDF/aqp_synthetic.pt: 论文中针对随机生成的数据库训练的模型
-10. UDF/modelscript_TPCH.pt: 论文中针对TPCH数据库训练的模型的torchscript文件
-11. UDF/modelscript_synthetic.pt: 论文中针对随机生成的数据库训练的模型的torchscript文件
+8. UDF/ETEQ.cpp: ETEQ版本UDF的代码
+9. UDF/myAQP.cpp: ETIQ版本UDF的代码
+10. UDF/aqp_TPCH.pt: 论文中针对TPCH数据库训练的模型
+11. UDF/aqp_synthetic.pt: 论文中针对随机生成的数据库训练的模型
+12. UDF/modelscript_TPCH.pt: 论文中针对TPCH数据库训练的模型的torchscript文件
+13. UDF/modelscript_synthetic.pt: 论文中针对随机生成的数据库训练的模型的torchscript文件
 
 # 复杂查询的转化
 

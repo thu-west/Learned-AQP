@@ -51,7 +51,7 @@ sudo chmod 777 /etc/mysql/modelscript.pt
 3. 在成功安装上述软件后，将CMakeLists.txt文件中的软件地址改为相应地址
 
 ### ETIQ 版本UDF
-5. 运行下列linux命令
+1. 运行下列linux命令
 ```bash
 mkdir build
 cd build
@@ -59,12 +59,12 @@ cmake ..
 cmake --build . --config Release
 sudo cp libmyAQP.so /usr/lib/mysql/plugin/
 ```
-6. 进入MySQL运行下列命令
+2. 进入MySQL运行下列命令
 ```bash
 DROP FUNCTION IF EXISTS myAQP;
 CREATE FUNCTION myAQP RETURNS REAL SONAME 'libmyAQP.so';
 ```
-7. 使用示例
+3. 使用示例
 ```bash
 select myAQP(0.2,0.52,0.1,0.23,0.065,0.27,0.055,0.87,0.32,0.68,0.01,0.78,0.27,0.83,0.005,0.35,0.03,0.08,0.46,0.99);
 ```
@@ -77,7 +77,7 @@ cd build
 cmake ..
 cmake --build . --config Release
 ```
-7. 使用示例
+3. 使用示例
 ```bash
 select sys_eval('/mnt/c/Learned-AQP/UDF/build/ETEQ 0.025 0.9 0.32 0.64 0.15 0.87 0.035 0.46 0.23 0.65 0.19 0.87 0.4 0.96 0.32 0.97 0.065 0.98 0.05 0.33');
 ```

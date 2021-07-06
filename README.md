@@ -85,7 +85,7 @@ CREATE FUNCTION myAQP RETURNS REAL SONAME 'libmyAQP.so';
 ```bash
 select myAQP(<lower bound of Attribute 1>,<upper bound of Attribute 1>, ... , <lower bound of Attribute n>, <upper bound of Attribute n>);
 ```
-7. an example for datasets with 10 attributs
+7. an example for datasets with 10 attributes
 ```bash
 select myAQP(0.2,0.52,0.1,0.23,0.065,0.27,0.055,0.87,0.32,0.68,0.01,0.78,0.27,0.83,0.005,0.35,0.03,0.08,0.46,0.99);
 ```
@@ -102,7 +102,7 @@ cmake --build . --config Release
 ```bash
 select sys_eval('<path of ETEQ executable> <lower bound of Attribute 1>  <upper bound of Attribute 1> ... <lower bound of Attribute n> <upper bound of Attribute n>');
 ```
-7. an example for datasets with 10 attributs
+7. an example for datasets with 10 attributes
 ```bash
 select sys_eval('/mnt/c/Learned-AQP/UDF/build/ETEQ 0.025 0.9 0.32 0.64 0.15 0.87 0.035 0.46 0.23 0.65 0.19 0.87 0.4 0.96 0.32 0.97 0.065 0.98 0.05 0.33');
 ```

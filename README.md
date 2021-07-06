@@ -47,7 +47,7 @@ pip install torch numpy einops
 sudo cp modelscript.pt /etc/mysql/modelscript.pt
 sudo chmod 777 /etc/mysql/modelscript.pt
 ```
-3. 在成功安装上述软件后，将UDF文件夹中CMakeLists.txt的软件地址改为相应地址
+3. 在成功安装上述软件后，将CMakeLists.txt文件中的软件地址改为相应地址
 5. 运行下列linux命令
 ```bash
 mkdir build

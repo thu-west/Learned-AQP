@@ -1,28 +1,43 @@
-# 介绍
+Code Contributors: Yang Duan yangd4@illinois.edu, Jiacheng Wu wjcskqygj@gmail.com
 
-这个项目借助机器学习的方法来实现近似查询。       
-通过用户自定义函数，我们成功将其嵌入在了MySQL数据库平台。         
-更多细节可以查阅我们的论文来获取 [TBD paper](https://TBD).      
+If you have any questions, feel free to contact us either by creating an issue on Github or sending emails. 
+
+Please cite our paper if you choose to use our code.
+```bash
+@article{
+  title={Database Native Approximate Query Processing Based on Machine-Learning},
+  author={Yang Duan, Yong Zhang, Jiacheng Wu},
+  booktitle={TBD},
+  year={2021},
+}
+```
+
+# Introduction
+
+The goal of this project is to design a new AQP module based on Machine Learning and embed it inside databases.     
+With the help of User Defined Functions, we successfully embedded it inside MySQL Database.          
+More details are in our paper [TBD paper](https://TBD).      
    
 ### 目录
-**[安装环境](#安装环境)**<br>
-**[使用方法](#使用方法)**<br>
-**[数据格式说明](#数据格式说明)**<br>
-**[文件说明](#文件说明)**<br>
-**[复杂查询的转化](#复杂查询的转化)**<br>
+**[Dependency](#Dependency)**<br>
+**[Installation and Usage](#Installation-and-Usage)**<br>
+**[Format of the training dataset](#Format-of-the-training-dataset)**<br>
+**[File Descriptions](#File-Descriptions)**<br>
+**[Algorithm Overview](#Algorithm-Overview)**<br>
 
 
-# 安装环境
+# Dependency
+We tested these implementations on Windows Subsystem for Linux 2 (WSL2) with Ubuntu 18.04
 
-## Python 原始版本
+## Python implementation
 python 3 + torch + numpy + einops
 
 ```bash
 pip install torch numpy einops 
 ```
 
-## UDF 嵌入式版本
-除上述软件之外，我们还额外使用了这些软件，其中部分软件需要和硬件相匹配：    
+## UDF implementations
+In addition to these mentioned packages, we also use the following specified versions of software that correspond to our hardware:     
 - CMake 3.19.2
 - GCC 7.5.0
 - Pytorch Stable 1.8.1
@@ -32,26 +47,26 @@ pip install torch numpy einops
 - Numcpp 2.4.2
 - lib_mysqludf_sys
 
-# 使用方法
+# Installation and Usage
 
-## Python 原始版本
+## Python implementation
 
-1. 训练数据的示例在global.py里使用数组表示（待会会具体说明），其他类型数据可以使用csv格式，然后numpy导入，并不麻烦
-2. 导入数据后，使用train.py训练即可，替换第46行的EG_TRAIN_SETS即可进行训练。训练完毕后，模型会导入到全局变量的MODEL_SAVE_PATH中
-3. 之后使用query.py即可测试，第24行为示例的query，调用do_query可以进行示例查询
+1. There is one example training set which is an array in globals.py.  You can use numpy to load a training set if it is in other formats, like csv.
+2. After loading the training set, you can run train.py to start training the model. The trained model will be saved to MODEL_SAVE_PATH in globals.py.
+3. In order to answer queries, we need to run query.py. There is one example query in query.py. The output in stdout is the estimated result of the query.
 
-## UDF 嵌入式版本    
-以下步骤均在UDF文件夹中完成   
-1. 运行Python文件train.py后使用query.py获取训练模型
-2. 将保存的modelscript.pt文件复制到mysql软件目录下
+## UDF implementations   
+All of the following operations need to be done in Folder UDF. 
+1. We need to do one query by the mentioned Python implementation, the one in Folder UDF, to obtain the trained model. 
+2. After running query.py, the torchscript modelscript.pt will be saved in the current path. Then, it needs to be copied to the path of mysql.
 ```bash
 sudo cp modelscript.pt /etc/mysql/modelscript.pt
 sudo chmod 777 /etc/mysql/modelscript.pt
 ```
-3. 在成功安装上述软件后，将CMakeLists.txt文件中的软件地址改为相应地址
+3. You need to modify CMakeLists.txt so that the paths of packages in it are the paths of installed packages in your computer.
 
-### ETIQ 版本UDF
-4. 运行下列linux命令
+### ETIQ UDF
+4. run the following linux commands
 ```bash
 mkdir build
 cd build
@@ -59,62 +74,61 @@ cmake ..
 cmake --build . --config Release
 sudo cp libmyAQP.so /usr/lib/mysql/plugin/
 ```
-5. 进入MySQL运行下列命令
+5. run the following commands in MySQL
 ```bash
 DROP FUNCTION IF EXISTS myAQP;
 CREATE FUNCTION myAQP RETURNS REAL SONAME 'libmyAQP.so';
 ```
-6. 使用示例
+6. an example usage
 ```bash
 select myAQP(0.2,0.52,0.1,0.23,0.065,0.27,0.055,0.87,0.32,0.68,0.01,0.78,0.27,0.83,0.005,0.35,0.03,0.08,0.46,0.99);
 ```
-### ETEQ 版本UDF
-4. 需要将CMakeLists.txt文件中的ETIQ部分注释掉且将ETEQ部分取消注释
-5. 运行下列linux命令
+### ETEQ UDF
+4. comment the codes of ETIQ in CMakeLists.txt and uncomment the codes of ETEQ
+5. run the following linux commands
 ```bash
 mkdir build
 cd build
 cmake ..
 cmake --build . --config Release
 ```
-6. 使用示例
+6. an example usage
 ```bash
 select sys_eval('/mnt/c/Learned-AQP/UDF/build/ETEQ 0.025 0.9 0.32 0.64 0.15 0.87 0.035 0.46 0.23 0.65 0.19 0.87 0.4 0.96 0.32 0.97 0.065 0.98 0.05 0.33');
 ```
 
-# 数据格式说明
+# Format of the training dataset
 
-1. 数据格式为一个二维数组即可，每一行代表一个简单查询（各个属性只有上界，没有下届）以及其对应的值。假设有N个属性，那么一行数据就有N+1个值，第一个值为正则后的查询人次结果，而剩下的值就一一对应该简单查询的每个属性的上界。
-2. 正则话。对于查询数量（第一个值）的正则化，应该是该简单查询获得人次除以库中所有有效人次。对于连续性的属性，就直接正则化到[0,1]；对于离散型的属性，预先给定好离散属性值的顺序，然后给予0,1,2…；之后再正则化即可。
-3. 所以，所谓的网络，就是输入N个属性的正则化后的值，然后输出一个人次的比值。
+It should be a 2d array with n rows and 11 columns if the dataset has ten attributes. In this example, the col0 represents the percentage of data points satisfying attr1 < col1 and attr2 < col2 and ... and attr10 < col10, and all of these attributes are normalized within the range [0,1].
 
-# 文件说明
 
-1. global.py: 定义了一些全局变量，以及偷懒直接在这里定义示例训练数据集
-2. shuffle.py: 定义了如何将一维的训练数据通过不断重排列，然后将各种排列整合后获得二位数据。具体操作，比如属性数量为10个，那么我们就会选择10个不同的重排列（按照一定规则生成，且对于所有训练输入都一致），然后将他们vstack之后获得10*10的二维图像，这个二维图像才是真正的输入。这样shuffle的好处，是可以让原来一维相距较远的属性值通过重排列之后，在二维距离上相对较近，从而使得使用卷积神经网络更为合理
-3. net.py: 网络的定义，全连接神经网络不利于泛化，所以这里以卷积神经网络为主，大致就是 卷积，池化，卷积，全连接，全连接。具体网络配置可以参见net.py的模型定义。相对使用了比较简单的网络，避免参数过多过拟合。
-4. train.py: 就是pytorch的基本训练框架，并没有什么太多的花样
-5. compose.py: 这个文件是用来文件复杂查询到简单查询，然后并且组合简单查询的结果获得复杂查询的结果。所谓的复杂查询就是每个属性既有上界，也有下界。因为一个包含n个属性的复杂query可以转化为2^n个简单查询，可以利用容斥定律来考虑这个问题（下一节细谈）
-6. query.py: 利用compose.py和train.py获得model进行具体query的查询示意
-7. UDF/CMakeLists.txt: 编译UDF的CMake文件
-8. UDF/ETEQ.cpp: ETEQ版本UDF的代码
-9. UDF/myAQP.cpp: ETIQ版本UDF的代码
-10. UDF/aqp_TPCH.pt: 论文中针对TPCH数据库训练的模型
-11. UDF/aqp_synthetic.pt: 论文中针对随机生成的数据库训练的模型
-12. UDF/modelscript_TPCH.pt: 论文中针对TPCH数据库训练的模型的torchscript文件
-13. UDF/modelscript_synthetic.pt: 论文中针对随机生成的数据库训练的模型的torchscript文件
+# File Descriptions
 
-# 复杂查询的转化
+1. globals.py: defines some global variables and the training dataset
+2. shuffle.py: defines functions that do permutations for the input array to help us correctly utilize Convolutional Neural Network later by reducing the distances of different attributes. If we have ten attributes, it will do permutations and stack them vertically to obtain one 10*10 2d image as the new input to CNN.
+3. net.py: defines the Convolutional Neural Network with simple models to prevent overfitting
+4. train.py: defines the training process with PyTorch
+5. compose.py: defines functions that compose and decompose the input array with the algorithm which we mentioned in our paper
+6. query.py: defines functions to do queries; saves models for UDF implementations (the version of query.py in Folder UDF)
+7. UDF/CMakeLists.txt: the CMake file to compile UDF implementations
+8. UDF/ETEQ.cpp: codes of ETEQ UDF
+9. UDF/myAQP.cpp: codes of ETIQ UDF
+10. UDF/aqp_TPCH.pt: the trained model in our paper for the TPCH Dataset
+11. UDF/aqp_synthetic.pt: the trained model in our paper for the synthetic Dataset
+12. UDF/modelscript_TPCH.pt: the torchscript of the trained model in our paper for the TPCH Dataset
+13. UDF/modelscript_synthetic.pt: the torchscript of the trained model in our paper for the synthetic dataset
 
-我们使用三个属性作为举例（代码注释中使用了2个属性举例）
+# Algorithm Overview
 
-同时，使用[0, A1 ] ^ [0, A2] ^ [0, A3] 这样的形式表示简单查询，其中A1,A2,A3就是对应属性的上界。显然简单查询是可以通过直接扔给神经网络获取对应的值的。
+Let's take the dataset with three attributes as an example (we use the example of a dataset with two attributes in the comments of our codes).     
 
-另外，使用R= [S1, E1] ^ [S2, E2] ^ [S3, E3] 这样的形式表示复杂查询，其中Si为下界，Ei为上界
+We define a query of [0, A1 ] ^ [0, A2] ^ [0, A3] where Ai is the upper bound of Attribute i as Simple Query. The results of Simple Query can be computed by Convolutional Neural Network.       
 
-我们可以把上述的查询看做是三维空间的一个范围，所以我们现在的目标就是把复杂查询对应的范围分解为不同的简单查询的范围的组合。
+In the same way, we define a query of [S1, E1] ^ [S2, E2] ^ [S3, E3] where Si is the lower bound of Attribute i and Ei is the upper bound of Attribute i as Complex Query.    
 
-首先显然可以分解为以下8 = 2^3个组合，因为每个简单查询的每个属性分别有上界和下界的2个选择，
+By Principle of inclusion-exclusion, Complex Query is the combination of many Simple Query, which we explained in detail in our paper [TBD paper](https://TBD).    
+
+For this example, it can generate 8 = 2^3 combinations since every attribute has one lower bound and one upper bound in every query，  
 
 0. 0b000 => R0 = [0, E1] ^ [0, E2] ^ [0, E3]
 1. 0b001 => R1 = [0, E1] ^ [0, E2] ^ [0, S3]
@@ -125,13 +139,9 @@ select sys_eval('/mnt/c/Learned-AQP/UDF/build/ETEQ 0.025 0.9 0.32 0.64 0.15 0.87
 6. 0b110 => R6 = [0, S1] ^ [0, S2] ^ [0, E3]
 7. 0b111 => R7 = [0, S1] ^ [0, S2] ^ [0, S3]
 
-由容斥原理， 我们可以知道 R = R0 - R1 - R2 - R3 + R4 + R5 + R6 - R7
+By Principle of inclusion-exclusion, we can see R = R0 - R1 - R2 - R3 + R4 + R5 + R6 - R7        
 
-通过以上例子，我们来分析以下每一个简单查询如何生成以及最后如何将对一个的查询结果组合成复杂查询
+In our implementations, we loop from 0 to 2^n-1. In other words, there are 2^n numbers in total. Based on bits of them in the binary format, we choose the lower bound or upper bound. For example, Number 5 is 0b101 in binary. The first bit is 1, so S1 should be the upper bound for Attribute 1 in this combination. The second bit is 0, so E2 should be the upper bound for Attribute 2 in this combination, and so on. In this way, we produce Combination R5.     
 
-首先就是分解操作，我们通过遍历0-> 2^n-1  这 2^n 个数字，然后根据其二进制表现形式，如上述的5，二进制就是0b101，然后根据二进制表示的第几位就代表第集个属性应该取上界还是下界作为简单查询的上界，比如0b101，第一个属性对应的位置是1，那么就去下界，然后第二个属性是0，就取上界，从而构成了R5。
-
-最后对于上述2^n个简单查询，我们都获得了其输出，然后问题就是如何组合呢？
-
-这个也非常简单，其实就是对他们进行加或者减，而其中每一项的符号取决与他们的二进制表示中含有1的个数，然后1的个数是偶数，那么就是+，否则就是-。所以在上述例子中， R5的二进制表示是0b101，其中包含偶数个1，所以在上述复杂查询R的组合中R5是取+。其他同理
+With the results of corresponding queries of these 2^n combinations from CNN, we need to do arithmetic operations to get the final answer of the Complex Query. In order to do so, we first calculate the number of Bit 1 of them in binary format. If the number is even, we should add the corresponding result; if the number is odd, we should subtract them. In the above example, 5 in binary format is 0b101. Since it has two Bit 1, which is even, we add the corresponding result to our final answer.
 

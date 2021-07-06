@@ -51,7 +51,7 @@ In addition to these mentioned packages, we also use the following specified ver
 
 ## Python implementation
 
-1. There is one example training set which is an array in globals.py.  You can use numpy to load a training set if it is in other formats, like csv.
+1. There is one example training set which is an array in ###globals.py###.  You can use numpy to load a training set if it is in other formats, like csv.
 2. After loading the training set, you can run train.py to start training the model. The trained model will be saved to MODEL_SAVE_PATH in globals.py.
 3. In order to answer queries, we need to run query.py. There is one example query in query.py. The output in stdout is the estimated result of the query.
 

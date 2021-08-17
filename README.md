@@ -9,7 +9,7 @@ Please cite our paper if you choose to use our code.
 @article{
   title={Database Native Approximate Query Processing Based on Machine-Learning},
   author={Yang Duan, Yong Zhang, Jiacheng Wu},
-  booktitle={TBD},
+  booktitle={WISA},
   year={2021},
 }
 ```

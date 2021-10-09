@@ -18,7 +18,7 @@ Please cite our paper if you choose to use our code.
 
 The goal of this project is to design a new AQP module based on Machine Learning and embed it inside databases.     
 With the help of User Defined Functions, we successfully embedded it inside MySQL Database.          
-More details are in our paper [TBD paper](https://TBD).      
+More details are in our [paper in WISA2021](https://link.springer.com/chapter/10.1007/978-3-030-87571-8_7).      
    
 ### Table of Contents
 **[Dependency](#Dependency)**<br>
